@@ -1,0 +1,28 @@
+{
+  "name": "fitness-coach-webapp",
+  "short_name": "FitnessCoach",
+  "description": "Полнофункциональное веб-приложение для персональных фитнес-тренеров",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#007bff",
+  "theme_color": "#007bff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/avatar-placeholder.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["fitness", "health", "productivity"],
+  "lang": "ru",
+  "screenshots": [
+    {
+      "src": "assets/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
