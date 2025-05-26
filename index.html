@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Фитнес-помощник для тренеров</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Фитнес-помощник</title>
     
     <!-- Telegram Web App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -11,11 +11,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-    
     <style>
-        /* Сброс стилей и основные переменные */
         * {
             margin: 0;
             padding: 0;
@@ -23,328 +19,388 @@
         }
 
         :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #17a2b8;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
+            --tg-theme-bg-color: var(--tg-bg-color, #ffffff);
+            --tg-theme-text-color: var(--tg-text-color, #000000);
+            --tg-theme-hint-color: var(--tg-hint-color, #999999);
+            --tg-theme-link-color: var(--tg-link-color, #2481cc);
+            --tg-theme-button-color: var(--tg-button-color, #2481cc);
+            --tg-theme-button-text-color: var(--tg-button-text-color, #ffffff);
+            --tg-theme-secondary-bg-color: var(--tg-secondary-bg-color, #f1f1f1);
             
-            --bg-color: #ffffff;
-            --surface-color: #f8f9fa;
-            --text-color: #212529;
-            --text-secondary: #6c757d;
-            --border-color: #dee2e6;
-            
-            --sidebar-width: 280px;
-            --header-height: 60px;
+            --primary-color: var(--tg-theme-button-color);
+            --bg-color: var(--tg-theme-bg-color);
+            --text-color: var(--tg-theme-text-color);
+            --secondary-bg: var(--tg-theme-secondary-bg-color);
+            --hint-color: var(--tg-theme-hint-color);
             
             --border-radius: 12px;
-            --box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
+            --spacing: 16px;
+            --transition: all 0.2s ease;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* Загрузчик */
-        .loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary-color), #0056b3);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            color: white;
-        }
-
-        .loader-spinner {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            animation: spin 2s infinite linear;
-        }
-
-        .loader p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Основное приложение */
-        .app {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Заголовок */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: var(--header-height);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-color);
-            border-bottom: 1px solid var(--border-color);
-            z-index: 1000;
+            color: var(--text-color);
+            line-height: 1.4;
+            overflow-x: hidden;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Контейнер приложения */
+        .app {
+            min-height: 100vh;
+            background: var(--bg-color);
+            padding-bottom: 20px;
+        }
+
+        /* Верхняя панель */
+        .top-bar {
+            background: var(--bg-color);
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--secondary-bg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
             backdrop-filter: blur(10px);
         }
 
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 100%;
-            padding: 0 1rem;
-        }
-
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            color: var(--text-color);
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: var(--transition);
-        }
-
-        .menu-toggle:hover {
-            background-color: var(--surface-color);
-        }
-
-        .header-title {
-            font-size: 1.5rem;
+        .welcome-text {
+            font-size: 24px;
             font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-icon {
-            position: relative;
-            background: none;
-            border: none;
-            padding: 0.75rem;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: var(--transition);
+            margin-bottom: 8px;
             color: var(--text-color);
         }
 
-        .btn-icon:hover {
-            background-color: var(--surface-color);
+        .subtitle {
+            color: var(--hint-color);
+            font-size: 16px;
         }
 
-        .notification-badge {
-            position: absolute;
-            top: 0.25rem;
-            right: 0.25rem;
-            background: var(--danger-color);
-            color: white;
-            border-radius: 50%;
-            width: 1.2rem;
-            height: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: bold;
+        /* Статистические карточки */
+        .stats-container {
+            padding: 0 var(--spacing);
+            margin-bottom: var(--spacing);
         }
 
-        /* Боковое меню */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: var(--header-height);
-            width: var(--sidebar-width);
-            height: calc(100vh - var(--header-height));
-            background: var(--surface-color);
-            border-right: 1px solid var(--border-color);
-            padding: 1.5rem 0;
-            overflow-y: auto;
-            transition: var(--transition);
-            z-index: 999;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: var(--spacing);
         }
 
-        .sidebar-header {
-            padding: 0 1.5rem 2rem;
+        .stat-card {
+            background: var(--secondary-bg);
+            border-radius: var(--border-radius);
+            padding: 16px;
             text-align: center;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 2rem;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
         }
 
-        .trainer-avatar {
-            width: 80px;
-            height: 80px;
+        .stat-card:active {
+            transform: scale(0.98);
+            opacity: 0.8;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), #0056b3);
-            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 1rem;
-            border: 3px solid var(--primary-color);
+            margin: 0 auto 8px;
+            color: white;
+            font-size: 18px;
         }
 
-        .trainer-info h3 {
-            margin-bottom: 0.25rem;
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
             color: var(--text-color);
+            margin-bottom: 4px;
         }
 
-        .trainer-info p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .nav-menu {
-            list-style: none;
-            padding: 0;
-        }
-
-        .nav-menu li {
-            margin-bottom: 0.5rem;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1.5rem;
-            color: var(--text-color);
-            text-decoration: none;
-            border-radius: 0 25px 25px 0;
-            margin-right: 1rem;
-            transition: var(--transition);
-            position: relative;
+        .stat-label {
+            font-size: 12px;
+            color: var(--hint-color);
             font-weight: 500;
         }
 
-        .nav-link:hover {
-            background-color: rgba(0, 123, 255, 0.1);
+        /* Быстрые действия */
+        .quick-actions {
+            padding: 0 var(--spacing);
+            margin-bottom: var(--spacing);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .action-btn {
+            background: var(--secondary-bg);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+            opacity: 0.7;
+        }
+
+        .action-icon {
+            font-size: 24px;
             color: var(--primary-color);
+            margin-bottom: 8px;
+            display: block;
         }
 
-        .nav-link.active {
-            background: linear-gradient(135deg, var(--primary-color), #0056b3);
+        .action-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        /* Список сегодняшних тренировок */
+        .today-workouts {
+            padding: 0 var(--spacing);
+            margin-bottom: var(--spacing);
+        }
+
+        .workout-list {
+            background: var(--secondary-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .workout-item {
+            padding: 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .workout-item:last-child {
+            border-bottom: none;
+        }
+
+        .workout-time {
+            background: var(--primary-color);
             color: white;
-            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-        }
-
-        .nav-link i {
-            margin-right: 0.75rem;
-            width: 1.2rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 60px;
             text-align: center;
         }
 
-        .sidebar-footer {
-            position: absolute;
-            bottom: 1rem;
-            left: 1rem;
-            right: 1rem;
+        .workout-info {
+            flex: 1;
         }
 
-        /* Основной контент */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            margin-top: var(--header-height);
-            padding: 2rem;
+        .workout-client {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 2px;
+        }
+
+        .workout-type {
+            font-size: 12px;
+            color: var(--hint-color);
+        }
+
+        .workout-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #856404;
+        }
+
+        .status-completed {
+            background: rgba(40, 167, 69, 0.2);
+            color: #155724;
+        }
+
+        /* Последние клиенты */
+        .recent-clients {
+            padding: 0 var(--spacing);
+            margin-bottom: var(--spacing);
+        }
+
+        .client-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .client-item {
+            background: var(--secondary-bg);
+            border-radius: var(--border-radius);
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .client-item:active {
+            transform: scale(0.98);
+            opacity: 0.8;
+        }
+
+        .client-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .client-details {
             flex: 1;
+        }
+
+        .client-name {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 2px;
+        }
+
+        .client-progress {
+            font-size: 12px;
+            color: var(--hint-color);
+        }
+
+        .client-arrow {
+            color: var(--hint-color);
+            font-size: 16px;
+        }
+
+        /* Навигация снизу */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: var(--bg-color);
-            min-height: calc(100vh - var(--header-height));
+            border-top: 1px solid var(--secondary-bg);
+            padding: 8px 0;
+            display: flex;
+            justify-content: space-around;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--hint-color);
+            text-decoration: none;
+            min-width: 60px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        .nav-item:active {
+            transform: scale(0.9);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .nav-text {
+            font-size: 10px;
+            font-weight: 500;
         }
 
         /* Страницы */
         .page {
             display: none;
-            animation: fadeIn 0.3s ease-in-out;
+            min-height: calc(100vh - 80px);
+            padding-bottom: 80px;
         }
 
         .page.active {
             display: block;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         .page-header {
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
+            padding: var(--spacing);
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--secondary-bg);
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
 
-        .page-header h2 {
-            font-size: 2rem;
+        .page-title {
+            font-size: 20px;
             font-weight: 600;
             color: var(--text-color);
         }
 
-        .page-header p {
-            color: var(--text-secondary);
-            margin-top: 0.5rem;
+        .page-content {
+            padding: var(--spacing);
         }
 
         /* Кнопки */
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: var(--tg-theme-button-text-color, white);
             border: none;
             border-radius: var(--border-radius);
-            font-size: 0.9rem;
-            font-weight: 500;
+            padding: 12px 16px;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            text-decoration: none;
-            text-align: center;
-            justify-content: center;
+            width: 100%;
+            font-size: 16px;
         }
 
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
-            box-shadow: var(--box-shadow);
-        }
-
-        .btn-secondary {
-            background: var(--secondary-color);
-            color: white;
-        }
-
-        .btn-success {
-            background: var(--success-color);
-            color: white;
+        .btn:active {
+            transform: scale(0.98);
+            opacity: 0.8;
         }
 
         .btn-outline {
@@ -353,836 +409,627 @@
             color: var(--primary-color);
         }
 
-        .btn-outline:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-            border-radius: 6px;
-        }
-
-        /* Сетка статистики */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--surface-color);
-            padding: 1.5rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transition: var(--transition);
-            border: 1px solid var(--border-color);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-            background: linear-gradient(135deg, var(--primary-color), #0056b3);
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        }
-
-        .stat-info {
-            flex: 1;
-        }
-
-        .stat-info h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-            color: var(--text-color);
-        }
-
-        .stat-info p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .stat-trend {
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 0.25rem 0.5rem;
-            border-radius: 20px;
-        }
-
-        .stat-trend.positive {
-            background: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
-        }
-
-        /* Быстрые действия */
-        .quick-actions {
-            margin-bottom: 2rem;
-        }
-
-        .quick-actions h3 {
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .action-btn {
-            background: var(--surface-color);
-            border: 2px solid var(--border-color);
-            padding: 1.5rem;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
+        /* Пустое состояние */
+        .empty-state {
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
+            padding: 40px 20px;
+            color: var(--hint-color);
         }
 
-        .action-btn:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--box-shadow);
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
 
-        .action-btn i {
-            font-size: 2rem;
-            color: var(--primary-color);
+        .empty-text {
+            font-size: 16px;
+            margin-bottom: 8px;
         }
 
-        .action-btn span {
-            font-weight: 500;
-            color: var(--text-color);
+        .empty-subtext {
+            font-size: 14px;
+            opacity: 0.7;
         }
 
-        /* Дашборд */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 2rem;
-        }
-
-        .dashboard-card {
-            background: var(--surface-color);
-            padding: 1.5rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            border: 1px solid var(--border-color);
-        }
-
-        .dashboard-card h3 {
-            margin-bottom: 1rem;
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Расписание */
-        .schedule-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .schedule-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            background: var(--bg-color);
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .schedule-time {
-            font-weight: 600;
-            color: var(--primary-color);
-            min-width: 50px;
-        }
-
-        .schedule-info {
-            flex: 1;
-        }
-
-        .schedule-info strong {
-            display: block;
-            margin-bottom: 0.25rem;
-            color: var(--text-color);
-        }
-
-        .schedule-info span {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .schedule-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .schedule-status.pending {
-            background: rgba(255, 193, 7, 0.1);
-            color: var(--warning-color);
-        }
-
-        .schedule-status.completed {
-            background: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
-        }
-
-        /* Клиенты */
-        .clients-filters {
-            margin-bottom: 2rem;
-        }
-
-        .search-box {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 3rem;
-            border: 2px solid var(--border-color);
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            background: var(--bg-color);
-            color: var(--text-color);
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 0.5rem 1rem;
-            border: 2px solid var(--border-color);
-            background: var(--bg-color);
-            color: var(--text-color);
-            border-radius: 25px;
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 0.9rem;
-        }
-
-        .filter-btn:hover {
-            border-color: var(--primary-color);
-            background: rgba(0, 123, 255, 0.1);
-        }
-
-        .filter-btn.active {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .clients-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .client-card {
-            background: var(--surface-color);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            box-shadow: var(--box-shadow);
-            transition: var(--transition);
-            border: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .client-card::before {
-            content: '';
-            position: absolute;
+        /* Загрузчик */
+        .loader {
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: linear-gradient(135deg, var(--primary-color), #0056b3);
-        }
-
-        .client-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            border-color: var(--primary-color);
-        }
-
-        .client-header {
+            bottom: 0;
+            background: var(--bg-color);
             display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .client-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color), #0056b3);
-            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
+            z-index: 1000;
         }
 
-        .client-info h3 {
-            margin-bottom: 0.25rem;
+        .loader-icon {
+            font-size: 48px;
+            color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        .loader-text {
+            margin-top: 16px;
+            color: var(--hint-color);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Модальные окна */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: flex-end;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            padding: var(--spacing);
+            border-bottom: 1px solid var(--secondary-bg);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
             color: var(--text-color);
         }
 
-        .client-info p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+        .modal-body {
+            padding: var(--spacing);
         }
 
-        .client-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
+        /* Формы */
+        .form-group {
+            margin-bottom: var(--spacing);
         }
 
-        .client-stat {
-            text-align: center;
-            padding: 0.75rem;
-            background: var(--bg-color);
-            border-radius: 8px;
-        }
-
-        .client-stat strong {
+        .form-label {
             display: block;
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            margin-bottom: 0.25rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
         }
 
-        .client-stat span {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .progress-bar {
+        .form-input {
             width: 100%;
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 0.5rem 0;
+            padding: 12px;
+            border: 1px solid var(--secondary-bg);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--bg-color);
+            color: var(--text-color);
         }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary-color), #0056b3);
-            border-radius: 10px;
-            transition: width 0.5s ease;
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
         }
 
-        .client-actions {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: space-between;
-        }
-
-        .client-actions .btn {
-            flex: 1;
-            padding: 0.5rem;
-            font-size: 0.8rem;
-        }
-
-        /* Адаптивность */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-            
-            .menu-toggle {
-                display: block;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 1rem;
-            }
-            
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                display: none; /* Скрываем в Telegram */
-            }
-            
-            .main-content {
-                margin-top: 0;
-                padding: 0.5rem;
-            }
-            
-            .sidebar {
-                top: 0;
-                height: 100vh;
-            }
-            
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
+        /* Адаптивность для очень маленьких экранов */
+        @media (max-width: 360px) {
             .stats-grid {
                 grid-template-columns: 1fr;
             }
             
-            .action-buttons {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .stat-card {
-                padding: 1rem;
-            }
-            
-            .stat-icon {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
-            }
-            
-            .stat-info h3 {
-                font-size: 1.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .action-buttons {
+            .action-grid {
                 grid-template-columns: 1fr;
             }
             
-            .main-content {
-                padding: 0.25rem;
-            }
-            
-            .client-actions {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .clients-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .client-stats {
-                grid-template-columns: 1fr;
+            .stat-card, .action-btn {
+                padding: 12px;
             }
         }
 
-        /* Анимации */
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        /* Утилиты */
-        .text-center { text-align: center; }
-        .mb-2 { margin-bottom: 1rem; }
-        .mt-2 { margin-top: 1rem; }
-
-        /* Скрыть ненужные элементы в Telegram */
-        .tg-viewport .header {
+        /* Скрытие элементов для чистого вида */
+        .hidden {
             display: none !important;
-        }
-
-        .tg-viewport .main-content {
-            margin-top: 0 !important;
         }
     </style>
 </head>
 <body>
     <!-- Загрузчик -->
     <div id="loader" class="loader">
-        <div class="loader-spinner">
+        <div class="loader-icon">
             <i class="fas fa-dumbbell"></i>
         </div>
-        <p>Загрузка фитнес-помощника...</p>
+        <div class="loader-text">Загрузка...</div>
     </div>
 
     <!-- Основное приложение -->
     <div id="app" class="app" style="display: none;">
-        <!-- Заголовок -->
-        <header class="header">
-            <div class="header-content">
-                <button id="menu-toggle" class="menu-toggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h1 class="header-title">
-                    <i class="fas fa-dumbbell"></i>
-                    Фитнес-помощник
-                </h1>
-                <div class="header-actions">
-                    <button class="btn-icon" id="notifications-btn" title="Уведомления">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </button>
-                    <button class="btn-icon" id="profile-btn" title="Профиль">
-                        <i class="fas fa-user-circle"></i>
-                    </button>
-                </div>
+        
+        <!-- Главная страница -->
+        <div id="home-page" class="page active">
+            <!-- Верхняя панель -->
+            <div class="top-bar">
+                <div class="welcome-text">Главная панель</div>
+                <div class="subtitle">Добро пожаловать в фитнес-помощник!</div>
             </div>
-        </header>
 
-        <!-- Навигация -->
-        <nav id="sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <div class="trainer-avatar">👤</div>
-                <div class="trainer-info">
-                    <h3 id="trainer-name">Иван Иванов</h3>
-                    <p id="trainer-role">Персональный тренер</p>
-                </div>
-            </div>
-            
-            <ul class="nav-menu">
-                <li><a href="#dashboard" class="nav-link active" data-page="dashboard">
-                    <i class="fas fa-tachometer-alt"></i> Главная
-                </a></li>
-                <li><a href="#clients" class="nav-link" data-page="clients">
-                    <i class="fas fa-users"></i> Клиенты
-                </a></li>
-                <li><a href="#workouts" class="nav-link" data-page="workouts">
-                    <i class="fas fa-dumbbell"></i> Тренировки
-                </a></li>
-                <li><a href="#analytics" class="nav-link" data-page="analytics">
-                    <i class="fas fa-chart-line"></i> Аналитика
-                </a></li>
-                <li><a href="#settings" class="nav-link" data-page="settings">
-                    <i class="fas fa-cog"></i> Настройки
-                </a></li>
-            </ul>
-
-            <div class="sidebar-footer">
-                <button class="btn btn-outline" id="telegram-bot-btn">
-                    <i class="fab fa-telegram"></i> В Telegram
-                </button>
-            </div>
-        </nav>
-
-        <!-- Основной контент -->
-        <main class="main-content">
-            <!-- Главная страница -->
-            <div id="dashboard-page" class="page active">
-                <div class="page-header">
-                    <div>
-                        <h2>Главная панель</h2>
-                        <p>Добро пожаловать в ваш фитнес-помощник!</p>
+            <!-- Статистика -->
+            <div class="stats-container">
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="app.navigateTo('clients')">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-value">25</div>
+                        <div class="stat-label">Всего клиентов</div>
+                    </div>
+                    
+                    <div class="stat-card" onclick="app.navigateTo('workouts')">
+                        <div class="stat-icon">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="stat-value">156</div>
+                        <div class="stat-label">Тренировок проведено</div>
+                    </div>
+                    
+                    <div class="stat-card" onclick="app.navigateTo('analytics')">
+                        <div class="stat-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-value">127,500₽</div>
+                        <div class="stat-label">Доход за месяц</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Тренировок сегодня</div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Статистика -->
+            <!-- Быстрые действия -->
+            <div class="quick-actions">
+                <div class="section-title">Быстрые действия</div>
+                <div class="action-grid">
+                    <button class="action-btn" onclick="app.showAddClientModal()">
+                        <i class="action-icon fas fa-user-plus"></i>
+                        <div class="action-text">Добавить клиента</div>
+                    </button>
+                    
+                    <button class="action-btn" onclick="app.showAddWorkoutModal()">
+                        <i class="action-icon fas fa-calendar-plus"></i>
+                        <div class="action-text">Запланировать тренировку</div>
+                    </button>
+                    
+                    <button class="action-btn" onclick="app.navigateTo('analytics')">
+                        <i class="action-icon fas fa-chart-bar"></i>
+                        <div class="action-text">Аналитика</div>
+                    </button>
+                    
+                    <button class="action-btn" onclick="app.navigateTo('settings')">
+                        <i class="action-icon fas fa-cog"></i>
+                        <div class="action-text">Настройки</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Сегодняшние тренировки -->
+            <div class="today-workouts">
+                <div class="section-title">Расписание на сегодня</div>
+                <div class="workout-list">
+                    <div class="workout-item">
+                        <div class="workout-time">09:00</div>
+                        <div class="workout-info">
+                            <div class="workout-client">Анна Иванова</div>
+                            <div class="workout-type">Силовая тренировка</div>
+                        </div>
+                        <div class="workout-status status-pending">Ожидается</div>
+                    </div>
+                    
+                    <div class="workout-item">
+                        <div class="workout-time">11:00</div>
+                        <div class="workout-info">
+                            <div class="workout-client">Петр Сидоров</div>
+                            <div class="workout-type">Кардио тренировка</div>
+                        </div>
+                        <div class="workout-status status-completed">Завершено</div>
+                    </div>
+                    
+                    <div class="workout-item">
+                        <div class="workout-time">14:00</div>
+                        <div class="workout-info">
+                            <div class="workout-client">Мария Петрова</div>
+                            <div class="workout-type">Функциональная</div>
+                        </div>
+                        <div class="workout-status status-pending">Ожидается</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Последние клиенты -->
+            <div class="recent-clients">
+                <div class="section-title">Последние клиенты</div>
+                <div class="client-list">
+                    <div class="client-item" onclick="app.viewClient(1)">
+                        <div class="client-avatar">АИ</div>
+                        <div class="client-details">
+                            <div class="client-name">Анна Иванова</div>
+                            <div class="client-progress">Прогресс: 75% • Похудение</div>
+                        </div>
+                        <div class="client-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="client-item" onclick="app.viewClient(2)">
+                        <div class="client-avatar">ПС</div>
+                        <div class="client-details">
+                            <div class="client-name">Петр Сидоров</div>
+                            <div class="client-progress">Прогресс: 60% • Набор массы</div>
+                        </div>
+                        <div class="client-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="client-item" onclick="app.viewClient(3)">
+                        <div class="client-avatar">МП</div>
+                        <div class="client-details">
+                            <div class="client-name">Мария Петрова</div>
+                            <div class="client-progress">Прогресс: 85% • Поддержание формы</div>
+                        </div>
+                        <div class="client-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница клиентов -->
+        <div id="clients-page" class="page">
+            <div class="page-header">
+                <div class="page-title">Клиенты</div>
+            </div>
+            <div class="page-content">
+                <button class="btn" onclick="app.showAddClientModal()">
+                    <i class="fas fa-plus"></i> Добавить нового клиента
+                </button>
+                
+                <div class="client-list" style="margin-top: 16px;">
+                    <div class="client-item" onclick="app.viewClient(1)">
+                        <div class="client-avatar">АИ</div>
+                        <div class="client-details">
+                            <div class="client-name">Анна Иванова</div>
+                            <div class="client-progress">Прогресс: 75% • Похудение</div>
+                        </div>
+                        <div class="client-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="client-item" onclick="app.viewClient(2)">
+                        <div class="client-avatar">ПС</div>
+                        <div class="client-details">
+                            <div class="client-name">Петр Сидоров</div>
+                            <div class="client-progress">Прогресс: 60% • Набор массы</div>
+                        </div>
+                        <div class="client-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="client-item" onclick="app.viewClient(3)">
+                        <div class="client-avatar">МП</div>
+                        <div class="client-details">
+                            <div class="client-name">Мария Петрова</div>
+                            <div class="client-progress">Прогресс: 85% • Поддержание формы</div>
+                        </div>
+                        <div class="client-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница тренировок -->
+        <div id="workouts-page" class="page">
+            <div class="page-header">
+                <div class="page-title">Тренировки</div>
+            </div>
+            <div class="page-content">
+                <button class="btn" onclick="app.showAddWorkoutModal()">
+                    <i class="fas fa-plus"></i> Запланировать тренировку
+                </button>
+                
+                <div style="margin-top: 16px;">
+                    <div class="section-title">Сегодня</div>
+                    <div class="workout-list">
+                        <div class="workout-item">
+                            <div class="workout-time">09:00</div>
+                            <div class="workout-info">
+                                <div class="workout-client">Анна Иванова</div>
+                                <div class="workout-type">Силовая тренировка • 60 мин</div>
+                            </div>
+                            <div class="workout-status status-pending">Ожидается</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница аналитики -->
+        <div id="analytics-page" class="page">
+            <div class="page-header">
+                <div class="page-title">Аналитика</div>
+            </div>
+            <div class="page-content">
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">
                             <i class="fas fa-users"></i>
                         </div>
-                        <div class="stat-info">
-                            <h3 id="total-clients">25</h3>
-                            <p>Всего клиентов</p>
-                        </div>
-                        <div class="stat-trend positive">
-                            <i class="fas fa-arrow-up"></i> +12%
-                        </div>
+                        <div class="stat-value">25</div>
+                        <div class="stat-label">Всего клиентов</div>
                     </div>
-
+                    
                     <div class="stat-card">
                         <div class="stat-icon">
-                            <i class="fas fa-dumbbell"></i>
+                            <i class="fas fa-chart-line"></i>
                         </div>
-                        <div class="stat-info">
-                            <h3 id="total-workouts">156</h3>
-                            <p>Тренировок проведено</p>
-                        </div>
-                        <div class="stat-trend positive">
-                            <i class="fas fa-arrow-up"></i> +8%
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="total-revenue">127,500₽</h3>
-                            <p>Доход за месяц</p>
-                        </div>
-                        <div class="stat-trend positive">
-                            <i class="fas fa-arrow-up"></i> +15%
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="today-workouts">5</h3>
-                            <p>Тренировок сегодня</p>
-                        </div>
-                        <div class="stat-trend positive">
-                            <i class="fas fa-arrow-up"></i> 0%
-                        </div>
+                        <div class="stat-value">+15%</div>
+                        <div class="stat-label">Рост за месяц</div>
                     </div>
                 </div>
-
-                <!-- Быстрые действия -->
-                <div class="quick-actions">
-                    <h3>Быстрые действия</h3>
-                    <div class="action-buttons">
-                        <button class="action-btn" data-page="clients">
-                            <i class="fas fa-user-plus"></i>
-                            <span>Добавить клиента</span>
-                        </button>
-                        <button class="action-btn" data-page="workouts">
-                            <i class="fas fa-calendar-plus"></i>
-                            <span>Запланировать тренировку</span>
-                        </button>
-                        <button class="action-btn" data-page="analytics">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>Посмотреть аналитику</span>
-                        </button>
-                        <button class="action-btn" data-page="settings">
-                            <i class="fas fa-cog"></i>
-                            <span>Настройки</span>
-                        </button>
+                
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-chart-bar"></i>
                     </div>
-                </div>
-
-                <!-- Дашборд -->
-                <div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <h3><i class="fas fa-clock"></i> Сегодняшнее расписание</h3>
-                        <div class="schedule-list">
-                            <div class="schedule-item">
-                                <div class="schedule-time">09:00</div>
-                                <div class="schedule-info">
-                                    <strong>Анна Иванова</strong>
-                                    <span>Силовая тренировка</span>
-                                </div>
-                                <div class="schedule-status pending">Ожидается</div>
-                            </div>
-                            <div class="schedule-item">
-                                <div class="schedule-time">11:00</div>
-                                <div class="schedule-info">
-                                    <strong>Петр Сидоров</strong>
-                                    <span>Кардио тренировка</span>
-                                </div>
-                                <div class="schedule-status completed">Завершено</div>
-                            </div>
-                            <div class="schedule-item">
-                                <div class="schedule-time">14:00</div>
-                                <div class="schedule-info">
-                                    <strong>Мария Петрова</strong>
-                                    <span>Функциональная</span>
-                                </div>
-                                <div class="schedule-status pending">Ожидается</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-card">
-                        <h3><i class="fas fa-chart-line"></i> Прогресс клиентов</h3>
-                        <canvas id="progressChart" width="400" height="200"></canvas>
-                    </div>
+                    <div class="empty-text">Детальная аналитика</div>
+                    <div class="empty-subtext">Графики и отчеты в разработке</div>
                 </div>
             </div>
+        </div>
 
-            <!-- Страница клиентов -->
-            <div id="clients-page" class="page">
-                <div class="page-header">
-                    <div>
-                        <h2>Управление клиентами</h2>
-                        <p>Все ваши клиенты в одном месте</p>
+        <!-- Страница настроек -->
+        <div id="settings-page" class="page">
+            <div class="page-header">
+                <div class="page-title">Настройки</div>
+            </div>
+            <div class="page-content">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-cog"></i>
                     </div>
-                    <button class="btn btn-primary" id="add-client-btn">
-                        <i class="fas fa-plus"></i> Добавить клиента
-                    </button>
-                </div>
-
-                <div class="clients-filters">
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="clients-search" placeholder="Поиск клиентов...">
-                    </div>
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" data-filter="all">Все</button>
-                        <button class="filter-btn" data-filter="active">Активные</button>
-                        <button class="filter-btn" data-filter="inactive">Неактивные</button>
-                    </div>
-                </div>
-
-                <div class="clients-grid" id="clients-grid">
-                    <!-- Клиенты загружаются через JS -->
+                    <div class="empty-text">Настройки профиля</div>
+                    <div class="empty-subtext">Функция в разработке</div>
                 </div>
             </div>
+        </div>
 
-            <!-- Страница тренировок -->
-            <div id="workouts-page" class="page">
-                <div class="page-header">
-                    <div>
-                        <h2>Тренировки</h2>
-                        <p>Планирование и управление тренировками</p>
-                    </div>
-                    <button class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Запланировать тренировку
-                    </button>
+        <!-- Нижняя навигация -->
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active" data-page="home">
+                <div class="nav-icon">
+                    <i class="fas fa-home"></i>
                 </div>
+                <div class="nav-text">Главная</div>
+            </a>
+            
+            <a href="#" class="nav-item" data-page="clients">
+                <div class="nav-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="nav-text">Клиенты</div>
+            </a>
+            
+            <a href="#" class="nav-item" data-page="workouts">
+                <div class="nav-icon">
+                    <i class="fas fa-dumbbell"></i>
+                </div>
+                <div class="nav-text">Тренировки</div>
+            </a>
+            
+            <a href="#" class="nav-item" data-page="analytics">
+                <div class="nav-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="nav-text">Аналитика</div>
+            </a>
+            
+            <a href="#" class="nav-item" data-page="settings">
+                <div class="nav-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="nav-text">Настройки</div>
+            </a>
+        </div>
+    </div>
 
-                <div class="dashboard-card">
-                    <h3>Календарь тренировок</h3>
-                    <p>Функция календаря в разработке...</p>
-                </div>
+    <!-- Модальное окно добавления клиента -->
+    <div id="add-client-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Новый клиент</div>
             </div>
-
-            <!-- Страница аналитики -->
-            <div id="analytics-page" class="page">
-                <div class="page-header">
-                    <div>
-                        <h2>Аналитика и отчеты</h2>
-                        <p>Детальная статистика вашей работы</p>
+            <div class="modal-body">
+                <form id="add-client-form">
+                    <div class="form-group">
+                        <label class="form-label">Имя</label>
+                        <input type="text" class="form-input" placeholder="Введите имя клиента" required>
                     </div>
-                </div>
-
-                <div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <h3>Динамика клиентов</h3>
-                        <canvas id="clientsChart" width="400" height="200"></canvas>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Телефон</label>
+                        <input type="tel" class="form-input" placeholder="+7 (999) 123-45-67">
                     </div>
-                    <div class="dashboard-card">
-                        <h3>Доходы по месяцам</h3>
-                        <canvas id="revenueChart" width="400" height="200"></canvas>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Цель тренировок</label>
+                        <select class="form-input">
+                            <option value="">Выберите цель</option>
+                            <option value="weight_loss">Похудение</option>
+                            <option value="muscle_gain">Набор массы</option>
+                            <option value="maintenance">Поддержание формы</option>
+                        </select>
                     </div>
-                </div>
+                    
+                    <button type="submit" class="btn">Добавить клиента</button>
+                    <button type="button" class="btn btn-outline" onclick="app.closeModal('add-client-modal')" style="margin-top: 8px;">Отмена</button>
+                </form>
             </div>
+        </div>
+    </div>
 
-            <!-- Страница настроек -->
-            <div id="settings-page" class="page">
-                <div class="page-header">
-                    <div>
-                        <h2>Настройки</h2>
-                        <p>Настройка профиля и приложения</p>
-                    </div>
-                </div>
-
-                <div class="dashboard-card">
-                    <h3><i class="fas fa-user"></i> Профиль тренера</h3>
-                    <p>Функция настройки профиля в разработке...</p>
-                </div>
+    <!-- Модальное окно добавления тренировки -->
+    <div id="add-workout-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Новая тренировка</div>
             </div>
-        </main>
+            <div class="modal-body">
+                <form id="add-workout-form">
+                    <div class="form-group">
+                        <label class="form-label">Клиент</label>
+                        <select class="form-input" required>
+                            <option value="">Выберите клиента</option>
+                            <option value="1">Анна Иванова</option>
+                            <option value="2">Петр Сидоров</option>
+                            <option value="3">Мария Петрова</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Дата</label>
+                        <input type="date" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Время</label>
+                        <input type="time" class="form-input" required>
+                    </div>
+                    
+                    <button type="submit" class="btn">Запланировать</button>
+                    <button type="button" class="btn btn-outline" onclick="app.closeModal('add-workout-modal')" style="margin-top: 8px;">Отмена</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Простая инициализация приложения
-        class SimpleFitnessApp {
+        class TelegramFitnessApp {
             constructor() {
-                this.currentPage = 'dashboard';
-                this.clients = [
-                    { id: 1, name: 'Анна Иванова', goal: 'Похудение', progress: 75, isActive: true },
-                    { id: 2, name: 'Петр Сидоров', goal: 'Набор массы', progress: 60, isActive: true },
-                    { id: 3, name: 'Мария Петрова', goal: 'Поддержание формы', progress: 85, isActive: true }
-                ];
+                this.currentPage = 'home';
                 this.init();
             }
 
             init() {
-                console.log('Инициализация приложения...');
-                this.bindEvents();
-                this.renderClients();
-                this.initCharts();
+                console.log('Инициализация Telegram WebApp...');
                 
-                // Инициализация Telegram WebApp
+                // Настройка Telegram WebApp
                 if (window.Telegram?.WebApp) {
-                    window.Telegram.WebApp.ready();
-                    window.Telegram.WebApp.expand();
-                    document.body.classList.add('tg-viewport');
+                    const tg = window.Telegram.WebApp;
+                    tg.ready();
+                    tg.expand();
+                    
+                    // Применяем тему Telegram
+                    this.applyTelegramTheme(tg);
+                    
+                    // Настраиваем главную кнопку
+                    tg.MainButton.hide();
+                    
+                    console.log('Telegram WebApp инициализирован');
+                }
+
+                // Привязываем события
+                this.bindEvents();
+                
+                // Скрываем загрузчик
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                }, 800);
+            }
+
+            applyTelegramTheme(tg) {
+                if (tg.themeParams) {
+                    const root = document.documentElement;
+                    
+                    if (tg.themeParams.bg_color) {
+                        root.style.setProperty('--tg-bg-color', tg.themeParams.bg_color);
+                    }
+                    if (tg.themeParams.text_color) {
+                        root.style.setProperty('--tg-text-color', tg.themeParams.text_color);
+                    }
+                    if (tg.themeParams.hint_color) {
+                        root.style.setProperty('--tg-hint-color', tg.themeParams.hint_color);
+                    }
+                    if (tg.themeParams.button_color) {
+                        root.style.setProperty('--tg-button-color', tg.themeParams.button_color);
+                    }
+                    if (tg.themeParams.secondary_bg_color) {
+                        root.style.setProperty('--tg-secondary-bg-color', tg.themeParams.secondary_bg_color);
+                    }
                 }
             }
 
             bindEvents() {
                 // Навигация
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    link.addEventListener('click', (e) => {
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
                         e.preventDefault();
-                        const page = link.getAttribute('data-page');
+                        const page = item.getAttribute('data-page');
                         this.navigateTo(page);
                     });
                 });
 
-                // Быстрые действия
-                document.querySelectorAll('.action-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const page = btn.getAttribute('data-page');
-                        this.navigateTo(page);
+                // Формы
+                document.getElementById('add-client-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addClient();
+                });
+
+                document.getElementById('add-workout-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addWorkout();
+                });
+
+                // Закрытие модалок по клику вне контента
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            this.closeModal(modal.id);
+                        }
                     });
-                });
-
-                // Мобильное меню
-                document.getElementById('menu-toggle')?.addEventListener('click', () => {
-                    document.getElementById('sidebar')?.classList.toggle('show');
-                });
-
-                // Уведомления
-                document.getElementById('notifications-btn')?.addEventListener('click', () => {
-                    this.showNotification('У вас 3 новых уведомления', 'info');
                 });
             }
 
@@ -1198,191 +1045,131 @@
                 }
 
                 // Обновляем навигацию
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('data-page') === page) {
-                        link.classList.add('active');
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('data-page') === page) {
+                        item.classList.add('active');
                     }
                 });
 
-                // Закрываем мобильное меню
-                if (window.innerWidth <= 1024) {
-                    document.getElementById('sidebar')?.classList.remove('show');
-                }
-
-                // Загружаем данные для страницы
-                if (page === 'clients') {
-                    this.renderClients();
-                } else if (page === 'analytics') {
-                    setTimeout(() => this.initAnalyticsCharts(), 100);
+                // Вибрация при переключении
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.selectionChanged();
                 }
             }
 
-            renderClients() {
-                const clientsGrid = document.getElementById('clients-grid');
-                if (!clientsGrid) return;
-
-                clientsGrid.innerHTML = this.clients.map(client => `
-                    <div class="client-card">
-                        <div class="client-header">
-                            <div class="client-avatar">${this.getInitials(client.name)}</div>
-                            <div class="client-info">
-                                <h3>${client.name}</h3>
-                                <p>${client.goal}</p>
-                            </div>
-                        </div>
-                        <div class="client-stats">
-                            <div class="client-stat">
-                                <strong>${client.progress}%</strong>
-                                <span>Прогресс</span>
-                            </div>
-                            <div class="client-stat">
-                                <strong>Активен</strong>
-                                <span>Статус</span>
-                            </div>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${client.progress}%"></div>
-                        </div>
-                        <div class="client-actions">
-                            <button class="btn btn-primary btn-sm" onclick="app.viewClient(${client.id})">
-                                <i class="fas fa-eye"></i> Просмотр
-                            </button>
-                            <button class="btn btn-success btn-sm">
-                                <i class="fas fa-calendar-plus"></i> Тренировка
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+            showAddClientModal() {
+                this.showModal('add-client-modal');
             }
 
-            getInitials(name) {
-                return name.split(' ').map(n => n[0]).join('').toUpperCase();
+            showAddWorkoutModal() {
+                this.showModal('add-workout-modal');
+            }
+
+            showModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('show');
+                    
+                    // Показываем главную кнопку Telegram
+                    if (window.Telegram?.WebApp) {
+                        window.Telegram.WebApp.MainButton.setText('Сохранить');
+                        window.Telegram.WebApp.MainButton.show();
+                    }
+                }
+            }
+
+            closeModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('show');
+                    
+                    // Скрываем главную кнопку
+                    if (window.Telegram?.WebApp) {
+                        window.Telegram.WebApp.MainButton.hide();
+                    }
+                }
+            }
+
+            addClient() {
+                this.showNotification('Клиент успешно добавлен!', 'success');
+                this.closeModal('add-client-modal');
+                
+                // Очищаем форму
+                document.getElementById('add-client-form').reset();
+            }
+
+            addWorkout() {
+                this.showNotification('Тренировка запланирована!', 'success');
+                this.closeModal('add-workout-modal');
+                
+                // Очищаем форму
+                document.getElementById('add-workout-form').reset();
             }
 
             viewClient(clientId) {
-                const client = this.clients.find(c => c.id === clientId);
-                if (client) {
-                    this.showNotification(`Просмотр клиента: ${client.name}`, 'info');
+                this.showNotification(`Просмотр клиента #${clientId}`, 'info');
+                
+                // Вибрация при нажатии
+                if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                 }
             }
 
             showNotification(message, type = 'info') {
+                // Используем встроенные уведомления Telegram если доступно
+                if (window.Telegram?.WebApp) {
+                    window.Telegram.WebApp.showAlert(message);
+                    return;
+                }
+
+                // Fallback для браузера
                 const notification = document.createElement('div');
-                notification.className = `notification notification-${type}`;
-                notification.innerHTML = `
-                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'}-circle"></i>
-                    <span>${message}</span>
-                `;
-
-                let container = document.querySelector('.notification-container');
-                if (!container) {
-                    container = document.createElement('div');
-                    container.className = 'notification-container';
-                    container.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        z-index: 3000;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 10px;
-                    `;
-                    document.body.appendChild(container);
-                }
-
                 notification.style.cssText = `
-                    padding: 1rem 1.5rem;
-                    border-radius: 8px;
-                    color: white;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    min-width: 300px;
-                    animation: slideIn 0.3s ease;
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
                     background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    z-index: 2000;
+                    font-weight: 500;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    animation: slideDown 0.3s ease;
                 `;
-
-                container.appendChild(notification);
-                setTimeout(() => notification.remove(), 3000);
-            }
-
-            initCharts() {
-                const ctx = document.getElementById('progressChart');
-                if (ctx && window.Chart) {
-                    try {
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
-                                datasets: [{
-                                    label: 'Прогресс клиентов',
-                                    data: [45, 52, 58, 65, 70, 75],
-                                    borderColor: '#007bff',
-                                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                                    tension: 0.4,
-                                    fill: true
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: { legend: { display: false } },
-                                scales: { y: { beginAtZero: true, max: 100 } }
-                            }
-                        });
-                    } catch (e) {
-                        console.log('Chart.js недоступен');
-                    }
-                }
-            }
-
-            initAnalyticsCharts() {
-                this.createChart('clientsChart', 'bar', ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'], [3, 5, 2, 8, 4, 6]);
-                this.createChart('revenueChart', 'line', ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'], [85000, 92000, 78000, 105000, 118000, 127500]);
-            }
-
-            createChart(canvasId, type, labels, data) {
-                const ctx = document.getElementById(canvasId);
-                if (ctx && window.Chart) {
-                    try {
-                        new Chart(ctx, {
-                            type: type,
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    label: 'Данные',
-                                    data: data,
-                                    borderColor: '#007bff',
-                                    backgroundColor: type === 'line' ? 'rgba(0, 123, 255, 0.1)' : '#007bff',
-                                    fill: type === 'line'
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false
-                            }
-                        });
-                    } catch (e) {
-                        console.log(`Не удалось создать график ${canvasId}`);
-                    }
-                }
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideUp 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2000);
             }
         }
 
-        // Инициализация
+        // Инициализация приложения
         let app;
         
-        document.addEventListener('DOMContentLoaded', function() {
-            // Скрываем лоадер
-            setTimeout(() => {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('app').style.display = 'flex';
-                
-                // Инициализируем приложение
-                app = new SimpleFitnessApp();
-            }, 1000);
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new TelegramFitnessApp();
         });
+
+        // Стили для анимаций уведомлений
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
