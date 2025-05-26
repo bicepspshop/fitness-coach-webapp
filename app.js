@@ -81,7 +81,6 @@ class FitnessApp {
             ]
         };
         
-        this.chartsManager = new ChartsManager();
         this.init();
     }
 
@@ -96,7 +95,6 @@ class FitnessApp {
         this.bindEvents();
         this.updateStats();
         this.renderTodaySchedule();
-        this.setupChartsManager();
         
         // Инициализируем менеджеры
         if (window.clientsManager) {
@@ -190,7 +188,7 @@ class FitnessApp {
         // Скрываем все страницы
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         
-        // Показываем нужную страницы
+        // Показываем нужную страницу
         const targetPage = document.getElementById(`${page}-page`);
         if (targetPage) {
             targetPage.classList.add('active');
@@ -489,26 +487,28 @@ class FitnessApp {
         this.showAddWorkoutModal();
         
         // Предзаполняем форму если переданы параметры
-        if (clientId) {
-            const clientSelect = document.querySelector('#add-workout-modal select[name="clientId"]');
-            if (clientSelect) {
-                clientSelect.value = clientId;
+        setTimeout(() => {
+            if (clientId) {
+                const clientSelect = document.querySelector('#add-workout-modal select[name="clientId"]');
+                if (clientSelect) {
+                    clientSelect.value = clientId;
+                }
             }
-        }
-        
-        if (date) {
-            const dateInput = document.querySelector('#add-workout-modal input[name="date"]');
-            if (dateInput) {
-                dateInput.value = date;
+            
+            if (date) {
+                const dateInput = document.querySelector('#add-workout-modal input[name="date"]');
+                if (dateInput) {
+                    dateInput.value = date;
+                }
             }
-        }
-        
-        if (time) {
-            const timeInput = document.querySelector('#add-workout-modal input[name="time"]');
-            if (timeInput) {
-                timeInput.value = time;
+            
+            if (time) {
+                const timeInput = document.querySelector('#add-workout-modal input[name="time"]');
+                if (timeInput) {
+                    timeInput.value = time;
+                }
             }
-        }
+        }, 100);
     }
 
     viewWorkout(workout) {
@@ -588,31 +588,30 @@ class FitnessApp {
     }
 
     // Графики
-    setupChartsManager() {
-        this.chartsManager = window.ChartsManager ? new window.ChartsManager() : null;
-    }
-
     initDashboardChart() {
-        if (this.chartsManager) {
-            this.chartsManager.createProgressChart('progressChart', this.data.clients);
+        if (window.ChartsManager) {
+            const chartsManager = new window.ChartsManager();
+            chartsManager.createProgressChart('progressChart', this.data.clients);
         }
     }
 
     initAnalyticsCharts() {
-        if (!this.chartsManager) return;
+        if (!window.ChartsManager) return;
+        
+        const chartsManager = new window.ChartsManager();
         
         setTimeout(() => {
             // График новых клиентов
-            this.chartsManager.createClientAcquisitionChart('clientsChart', this.data.clients);
+            chartsManager.createClientAcquisitionChart('clientsChart', this.data.clients);
             
             // График доходов
-            this.chartsManager.createRevenueChart('revenueChart');
+            chartsManager.createRevenueChart('revenueChart');
             
             // График типов тренировок
-            this.chartsManager.createWorkoutDistributionChart('workoutTypesChart', this.data.workouts);
+            chartsManager.createWorkoutDistributionChart('workoutTypesChart', this.data.workouts);
             
             // График посещаемости
-            this.chartsManager.createAttendanceChart('attendanceChart', {
+            chartsManager.createAttendanceChart('attendanceChart', {
                 scheduled: [15, 18, 16, 20],
                 attended: [14, 16, 15, 18],
                 missed: [1, 2, 1, 2]
@@ -656,32 +655,6 @@ styles.textContent = `
         font-size: 3rem;
         margin-bottom: 1rem;
         opacity: 0.5;
-    }
-    
-    .loader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #007bff, #0056b3);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        color: white;
-    }
-    
-    .loader-spinner {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
     }
 `;
 document.head.appendChild(styles);
