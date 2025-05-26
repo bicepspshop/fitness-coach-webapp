@@ -1,0 +1,5 @@
+<!-- SVG placeholder для аватара -->
+<svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+  <rect width="80" height="80" fill="#007bff"/>
+  <text x="40" y="45" font-family="Arial" font-size="24" fill="white" text-anchor="middle" dominant-baseline="middle">👤</text>
+</svg>
