@@ -1090,10 +1090,10 @@
             openWorkoutPlanner() {
                 // Открываем планировщик тренировок
                 if (window.Telegram?.WebApp) {
-                    // В Telegram открываем как веб-приложение
-                    window.location.href = 'workout-planner.html';
+                    // В Telegram открываем специальную версию
+                    window.location.href = 'workout-planner-telegram.html';
                 } else {
-                    // В браузере открываем в новой вкладке
+                    // В браузере открываем полную версию
                     window.open('workout-planner.html', '_blank');
                 }
             }
@@ -1501,7 +1501,7 @@
                 
                 // Открываем планировщик
                 if (window.Telegram?.WebApp) {
-                    window.location.href = 'workout-planner.html';
+                    window.location.href = 'workout-planner-telegram.html';
                 } else {
                     window.open('workout-planner.html', '_blank');
                 }
