@@ -683,7 +683,7 @@
                         <div class="stat-icon">
                             <i class="fas fa-coins"></i>
                         </div>
-                        <div class="stat-value">127,500₽</div>
+                        <div class="stat-value" id="monthly-income">0₽</div>
                         <div class="stat-label">Доход за месяц</div>
                     </div>
                     
@@ -794,7 +794,7 @@
                         <div class="stat-icon">
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <div class="stat-value">+15%</div>
+                        <div class="stat-value" id="growth-percentage">0%</div>
                         <div class="stat-label">Рост за месяц</div>
                     </div>
                 </div>
@@ -948,19 +948,32 @@
         class TelegramFitnessApp {
             constructor() {
                 this.currentPage = 'home';
-                this.clients = this.loadClients();
-                this.workouts = this.loadWorkouts();
+                this.clients = [];
+                this.workouts = [];
+                this.telegramId = null;
                 this.init();
             }
 
-            init() {
+            async init() {
                 console.log('Инициализация Telegram WebApp...');
+                
+                // Очистка старых данных при первом запуске
+                this.clearDemoData();
                 
                 // Настройка Telegram WebApp
                 if (window.Telegram?.WebApp) {
                     const tg = window.Telegram.WebApp;
                     tg.ready();
                     tg.expand();
+                    
+                    // Получаем ID пользователя
+                    if (tg.initDataUnsafe?.user?.id) {
+                        this.telegramId = tg.initDataUnsafe.user.id.toString();
+                        console.log('Пользователь Telegram:', this.telegramId);
+                        
+                        // Пытаемся загрузить клиентов из бота
+                        await this.loadClientsFromBot();
+                    }
                     
                     // Применяем тему Telegram
                     this.applyTelegramTheme(tg);
@@ -969,6 +982,10 @@
                     tg.MainButton.hide();
                     
                     console.log('Telegram WebApp инициализирован');
+                } else {
+                    // Если не в Telegram, загружаем из localStorage
+                    this.clients = this.loadClients();
+                    this.workouts = this.loadWorkouts();
                 }
 
                 // Привязываем события
@@ -993,6 +1010,36 @@
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('app').style.display = 'block';
                 }, 800);
+            }
+
+            async loadClientsFromBot() {
+                """Загружаем клиентов через API бота"""
+                try {
+                    // Пытаемся загрузить через API (если работает)
+                    // const response = await fetch(`/api/trainers/${this.telegramId}/clients`);
+                    // if (response.ok) {
+                    //     const clients = await response.json();
+                    //     this.processClientsFromBot(clients);
+                    // }
+                    
+                    // Пока используем сохраненные данные
+                    const savedSync = localStorage.getItem('botClientsSync');
+                    if (savedSync) {
+                        const syncData = JSON.parse(savedSync);
+                        if (syncData.trainer_telegram_id === this.telegramId) {
+                            this.clients = syncData.clients;
+                            console.log(`Загружено клиентов из бота: ${this.clients.length}`);
+                            return;
+                        }
+                    }
+                    
+                    // Если нет синхронизированных данных, загружаем обычные
+                    this.clients = this.loadClients();
+                    
+                } catch (error) {
+                    console.error('Ошибка загрузки клиентов из бота:', error);
+                    this.clients = this.loadClients();
+                }
             }
 
             applyTelegramTheme(tg) {
@@ -1223,12 +1270,8 @@
                     console.warn('Ошибка загрузки клиентов:', e);
                 }
                 
-                // Дефолтные клиенты
-                return [
-                    { id: 1, name: 'Анна Иванова', avatar: 'АИ', goal: 'Похудение', progress: 75, phone: '+7 999 123 45 67' },
-                    { id: 2, name: 'Петр Сидоров', avatar: 'ПС', goal: 'Набор массы', progress: 60, phone: '+7 999 123 45 68' },
-                    { id: 3, name: 'Мария Петрова', avatar: 'МП', goal: 'Поддержание формы', progress: 85, phone: '+7 999 123 45 69' }
-                ];
+                // Пустое состояние для нового пользователя
+                return [];
             }
 
             loadWorkouts() {
@@ -1258,28 +1301,8 @@
                     console.warn('Ошибка загрузки тренировок:', e);
                 }
                 
-                // Дефолтные тренировки
-                const today = new Date().toISOString().split('T')[0];
-                return [
-                    { 
-                        id: 1, 
-                        clientId: 1, 
-                        clientName: 'Анна Иванова', 
-                        date: today, 
-                        time: '09:00', 
-                        type: 'Силовая', 
-                        status: 'pending' 
-                    },
-                    { 
-                        id: 2, 
-                        clientId: 2, 
-                        clientName: 'Петр Сидоров', 
-                        date: today, 
-                        time: '11:00', 
-                        type: 'Кардио', 
-                        status: 'completed' 
-                    }
-                ];
+                // Пустое состояние для нового пользователя
+                return [];
             }
 
             getWorkoutTypeName(type) {
@@ -1658,6 +1681,27 @@
                         this.closeModal('client-workouts-modal');
                     }
                 });
+            }
+
+            clearDemoData() {
+                try {
+                    // Очищаем все старые данные
+                    const keysToRemove = [
+                        'fitnessClients',
+                        'fitnessWorkouts', 
+                        'workouts',
+                        'botClientsSync'
+                    ];
+                    
+                    keysToRemove.forEach(key => {
+                        if (localStorage.getItem(key)) {
+                            localStorage.removeItem(key);
+                            console.log(`Очищен ключ localStorage: ${key}`);
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Ошибка очистки localStorage:', e);
+                }
             }
 
             showNotification(message, type = 'info') {
