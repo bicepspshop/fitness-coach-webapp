@@ -309,6 +309,36 @@
             color: var(--hint-color);
             font-size: 16px;
         }
+        
+        .client-actions {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .client-item {
+            transition: background-color 0.2s;
+        }
+        
+        .client-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        /* Прогресс бар */
+        .progress {
+            background-color: var(--secondary-bg);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            line-height: 1.5;
+            font-weight: 600;
+            transition: width 0.6s ease;
+        }
 
         /* Навигация снизу */
         .bottom-nav {
@@ -562,6 +592,35 @@
         .hidden {
             display: none !important;
         }
+        
+        /* Бейджи */
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1;
+            color: #fff;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.375rem;
+            background-color: #6c757d;
+            margin-left: 0.5rem;
+        }
+        
+        .badge-info {
+            background-color: #17a2b8;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+            color: #000;
+        }
 
         /* Дополнительные стили для тренировок */
         .workout-actions {
@@ -647,9 +706,9 @@
                         <div class="action-text">Добавить клиента</div>
                     </button>
                     
-                    <button class="action-btn" onclick="app.showAddWorkoutModal()">
+                    <button class="action-btn" onclick="app.openWorkoutPlanner()">
                         <i class="action-icon fas fa-calendar-plus"></i>
-                        <div class="action-text">Запланировать тренировку</div>
+                        <div class="action-text">Планировщик тренировок</div>
                     </button>
                     
                     <button class="action-btn" onclick="app.navigateTo('analytics')">
@@ -918,6 +977,17 @@
                 // Загружаем данные
                 this.loadData();
                 
+                // Слушаем события от планировщика
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'workouts') {
+                        // Перезагружаем тренировки
+                        this.workouts = this.loadWorkouts();
+                        this.renderTodayWorkouts();
+                        this.renderAllWorkouts();
+                        this.updateStats();
+                    }
+                });
+                
                 // Скрываем загрузчик
                 setTimeout(() => {
                     document.getElementById('loader').style.display = 'none';
@@ -1015,6 +1085,17 @@
             showAddWorkoutModal() {
                 this.updateWorkoutClientOptions();
                 this.showModal('add-workout-modal');
+            }
+
+            openWorkoutPlanner() {
+                // Открываем планировщик тренировок
+                if (window.Telegram?.WebApp) {
+                    // В Telegram открываем как веб-приложение
+                    window.location.href = 'workout-planner.html';
+                } else {
+                    // В браузере открываем в новой вкладке
+                    window.open('workout-planner.html', '_blank');
+                }
             }
 
             showModal(modalId) {
@@ -1152,6 +1233,23 @@
 
             loadWorkouts() {
                 try {
+                    // Сначала проверяем тренировки из планировщика
+                    const plannedWorkouts = localStorage.getItem('workouts');
+                    if (plannedWorkouts) {
+                        const workouts = JSON.parse(plannedWorkouts);
+                        // Преобразуем формат из планировщика
+                        return workouts.map(w => {
+                            const client = this.clients.find(c => c.id === w.clientId);
+                            return {
+                                ...w,
+                                clientName: client ? client.name : 'Неизвестный клиент',
+                                type: this.getWorkoutTypeName(w.type),
+                                status: w.status || 'pending'
+                            };
+                        });
+                    }
+                    
+                    // Если нет, проверяем старый формат
                     const saved = localStorage.getItem('fitnessWorkouts');
                     if (saved) {
                         return JSON.parse(saved);
@@ -1182,6 +1280,17 @@
                         status: 'completed' 
                     }
                 ];
+            }
+
+            getWorkoutTypeName(type) {
+                const types = {
+                    strength: 'Силовая',
+                    cardio: 'Кардио',
+                    functional: 'Функциональная',
+                    stretching: 'Растяжка',
+                    mixed: 'Смешанная'
+                };
+                return types[type] || type;
             }
 
             saveClients() {
@@ -1230,14 +1339,19 @@
                 }
 
                 const clientHTML = this.clients.map(client => `
-                    <div class="client-item" onclick="app.viewClient(${client.id})">
+                    <div class="client-item">
                         <div class="client-avatar">${client.avatar}</div>
-                        <div class="client-details">
+                        <div class="client-details" onclick="app.viewClient(${client.id})">
                             <div class="client-name">${client.name}</div>
                             <div class="client-progress">Прогресс: ${client.progress}% • ${client.goal}</div>
                         </div>
-                        <div class="client-arrow">
-                            <i class="fas fa-chevron-right"></i>
+                        <div class="client-actions" style="display: flex; gap: 5px;">
+                            <button class="btn btn-sm btn-primary" onclick="app.planWorkoutForClient(${client.id}, '${client.name}')" title="Планировать тренировку">
+                                <i class="fas fa-calendar-plus"></i>
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="app.viewClientWorkouts(${client.id})" title="История тренировок">
+                                <i class="fas fa-history"></i>
+                            </button>
                         </div>
                     </div>
                 `).join('');
@@ -1375,11 +1489,175 @@
 
             viewClient(clientId) {
                 const client = this.clients.find(c => c.id === clientId);
-                if (client && window.Telegram?.WebApp) {
-                    window.Telegram.WebApp.showAlert(`Клиент: ${client.name}\nТелефон: ${client.phone}\nЦель: ${client.goal}\nПрогресс: ${client.progress}%`);
-                } else if (client) {
-                    alert(`Клиент: ${client.name}\nТелефон: ${client.phone}\nЦель: ${client.goal}\nПрогресс: ${client.progress}%`);
+                if (!client) return;
+                
+                // Показываем детальную информацию о клиенте
+                this.showClientDetails(client);
+            }
+
+            planWorkoutForClient(clientId, clientName) {
+                // Сохраняем данные клиента в sessionStorage
+                sessionStorage.setItem('selectedClient', JSON.stringify({ id: clientId, name: clientName }));
+                
+                // Открываем планировщик
+                if (window.Telegram?.WebApp) {
+                    window.location.href = 'workout-planner.html';
+                } else {
+                    window.open('workout-planner.html', '_blank');
                 }
+            }
+
+            viewClientWorkouts(clientId) {
+                const client = this.clients.find(c => c.id === clientId);
+                if (!client) return;
+                
+                // Загружаем тренировки клиента
+                const workouts = this.workouts.filter(w => w.clientId === clientId)
+                    .sort((a, b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
+                
+                this.showClientWorkouts(client, workouts);
+            }
+
+            showClientDetails(client) {
+                const modalContent = `
+                    <div class="modal show" id="client-details-modal">
+                        <div class="modal-content" style="max-width: 90%; margin: 20px auto;">
+                            <div class="modal-header">
+                                <div class="modal-title">Клиент: ${client.name}</div>
+                            </div>
+                            <div class="modal-body">
+                                <div class="client-info-grid" style="display: grid; gap: 15px;">
+                                    <div>
+                                        <strong>Телефон:</strong> ${client.phone || 'Не указан'}
+                                    </div>
+                                    <div>
+                                        <strong>Цель:</strong> ${client.goal || 'Не указана'}
+                                    </div>
+                                    <div>
+                                        <strong>Прогресс:</strong>
+                                        <div class="progress" style="height: 20px; margin-top: 5px;">
+                                            <div class="progress-bar" style="width: ${client.progress}%">${client.progress}%</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Дата регистрации:</strong> ${new Date(client.createdAt).toLocaleDateString('ru-RU')}
+                                    </div>
+                                </div>
+                                
+                                <div class="button-group" style="margin-top: 20px;">
+                                    <button class="btn btn-primary" onclick="app.planWorkoutForClient(${client.id}, '${client.name}')">
+                                        <i class="fas fa-calendar-plus"></i> Планировать тренировку
+                                    </button>
+                                    <button class="btn btn-success" onclick="app.viewClientWorkouts(${client.id})">
+                                        <i class="fas fa-history"></i> История тренировок
+                                    </button>
+                                    <button class="btn btn-outline" onclick="app.closeModal('client-details-modal')">
+                                        Закрыть
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Удаляем старую модалку если есть
+                const oldModal = document.getElementById('client-details-modal');
+                if (oldModal) oldModal.remove();
+                
+                // Добавляем новую
+                document.body.insertAdjacentHTML('beforeend', modalContent);
+                
+                // Закрытие по клику вне
+                const modal = document.getElementById('client-details-modal');
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.closeModal('client-details-modal');
+                    }
+                });
+            }
+
+            showClientWorkouts(client, workouts) {
+                let workoutsHTML = '';
+                
+                if (workouts.length === 0) {
+                    workoutsHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-dumbbell"></i>
+                            </div>
+                            <div class="empty-text">Нет тренировок</div>
+                            <div class="empty-subtext">Запланируйте первую тренировку для этого клиента</div>
+                        </div>
+                    `;
+                } else {
+                    workoutsHTML = `
+                        <div class="workout-list" style="max-height: 400px; overflow-y: auto;">
+                            ${workouts.map(workout => {
+                                const workoutDate = new Date(workout.date);
+                                const isToday = new Date().toDateString() === workoutDate.toDateString();
+                                const statusClass = workout.status === 'completed' ? 'status-completed' : 'status-pending';
+                                
+                                return `
+                                    <div class="workout-item">
+                                        <div class="workout-time">${workout.time}</div>
+                                        <div class="workout-info">
+                                            <div class="workout-client">
+                                                ${workout.type} тренировка
+                                                ${isToday ? '<span class="badge badge-info">Cегодня</span>' : ''}
+                                            </div>
+                                            <div class="workout-type">
+                                                ${workoutDate.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                ${workout.exercises ? ` • ${workout.exercises.length} упражнений` : ''}
+                                            </div>
+                                        </div>
+                                        <div class="workout-status ${statusClass}">
+                                            ${workout.status === 'completed' ? 'Завершено' : 'Ожидается'}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+                
+                const modalContent = `
+                    <div class="modal show" id="client-workouts-modal">
+                        <div class="modal-content" style="max-width: 90%; margin: 20px auto;">
+                            <div class="modal-header">
+                                <div class="modal-title">Тренировки: ${client.name}</div>
+                            </div>
+                            <div class="modal-body">
+                                <div style="margin-bottom: 15px;">
+                                    <strong>Всего тренировок:</strong> ${workouts.length}
+                                </div>
+                                ${workoutsHTML}
+                                <div class="button-group" style="margin-top: 20px;">
+                                    <button class="btn btn-primary" onclick="app.planWorkoutForClient(${client.id}, '${client.name}')">
+                                        <i class="fas fa-plus"></i> Добавить тренировку
+                                    </button>
+                                    <button class="btn btn-outline" onclick="app.closeModal('client-workouts-modal')">
+                                        Закрыть
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Удаляем старую модалку
+                const oldModal = document.getElementById('client-workouts-modal');
+                if (oldModal) oldModal.remove();
+                
+                // Добавляем новую
+                document.body.insertAdjacentHTML('beforeend', modalContent);
+                
+                // Закрытие по клику вне
+                const modal = document.getElementById('client-workouts-modal');
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.closeModal('client-workouts-modal');
+                    }
+                });
             }
 
             showNotification(message, type = 'info') {
